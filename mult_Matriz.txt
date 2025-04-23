@@ -1,0 +1,131 @@
+.data
+A:  .word 1,2,3
+    .word 4,5,6
+    .word 7,8,9
+
+B:  .word 9,8,7
+    .word 6,5,4
+    .word 3,2,1
+
+C:  .word 0,0,0
+    .word 0,0,0
+    .word 0,0,0
+
+spc: .asciz " "
+nl:  .asciz "\n"
+
+.text
+main:
+    auipc  s0, %pcrel_hi(A)
+    addi   s0, s0, %pcrel_lo(A)
+    auipc  s1, %pcrel_hi(B)
+    addi   s1, s1, %pcrel_lo(B)
+    auipc  s2, %pcrel_hi(C)
+    addi   s2, s2, %pcrel_lo(C)
+
+    addi   t0, zero, 0
+loop_i:
+    slti   t4, t0, 3
+    beq    t4, zero, print_result
+    addi   t1, zero, 0
+
+loop_j:
+    slti   t4, t1, 3
+    beq    t4, zero, next_i
+    addi   t2, zero, 0
+    addi   t3, zero, 0
+
+loop_k:
+    slti   t4, t3, 3
+    beq    t4, zero, store_c
+
+    slli   t4, t0, 3
+    slli   t5, t0, 2
+    add    t4, t4, t5
+    slli   t5, t3, 2
+    add    t4, t4, t5
+    add    t4, s0, t4
+    lw     t5, 0(t4)
+
+    slli   t4, t3, 2
+    slli   t6, t3, 1
+    add    t4, t4, t6
+    slli   t4, t4, 1
+    slli   t6, t1, 2
+    add    t4, t4, t6
+    add    t4, s1, t4
+    lw     t6, 0(t4)
+
+    addi   t4, zero, 0
+    beq    t6, zero, end_mul
+    addi   a1, t6, 0
+mul_loop:
+    add    t4, t4, t5
+    addi   a1, a1, -1
+    bne    a1, zero, mul_loop
+end_mul:
+    add    t2, t2, t4
+
+    addi   t3, t3, 1
+    jal    zero, loop_k
+
+store_c:
+    slli   t4, t0, 3
+    slli   t5, t0, 2
+    add    t4, t4, t5
+    slli   t5, t1, 2
+    add    t4, t4, t5
+    add    t4, s2, t4
+    sw     t2, 0(t4)
+
+    addi   t1, t1, 1
+    jal    zero, loop_j
+
+next_i:
+    addi   t0, t0, 1
+    jal    zero, loop_i
+
+print_result:
+    addi   t0, zero, 0
+print_row:
+    slti   t4, t0, 3
+    beq    t4, zero, done
+    addi   t1, zero, 0
+
+print_col:
+    slti   t4, t1, 3
+    beq    t4, zero, next_row
+
+    slli   t4, t0, 3
+    slli   t5, t0, 2
+    add    t4, t4, t5
+    slli   t5, t1, 2
+    add    t4, t4, t5
+    add    t4, s2, t4
+    lw     a0, 0(t4)
+
+    addi   a7, zero, 1
+    ecall
+
+    auipc  t6, %pcrel_hi(spc)
+    addi   t6, t6, %pcrel_lo(spc)
+    addi   a0, t6, 0
+    addi   a7, zero, 4
+    ecall
+
+    addi   t1, t1, 1
+    jal    zero, print_col
+
+next_row:
+    auipc  t6, %pcrel_hi(nl)
+    addi   t6, t6, %pcrel_lo(nl)
+    addi   a0, t6, 0
+    addi   a7, zero, 4
+    ecall
+
+    addi   t0, t0, 1
+    jal    zero, print_row
+
+done:
+    addi   a7, zero, 10
+    ecall
